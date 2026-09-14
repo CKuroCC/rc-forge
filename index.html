@@ -143,6 +143,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     <button class="tab on" data-s="status">Status</button>
     <button class="tab" data-s="formats">Formats</button>
     <button class="tab" data-s="tools">Toolchain</button>
+    <button class="tab" data-s="caps">Capabilities</button>
     <button class="tab" data-s="arch">Architecture</button>
     <button class="tab" data-s="risks">Risk register</button>
     <button class="tab" data-s="road">Roadmap</button>
@@ -358,6 +359,169 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     <p class="muted" style="margin-bottom:0">Console handles worth knowing: <code>set SWRCFix FOV</code>,
     <code>SetFpsLimit</code>, <code>userendev mod|d3d|opengl</code>, <code>flushresources</code>,
     <code>EditActor</code>.</p>
+  </div>
+</section>
+
+<section id="caps">
+  <div class="card">
+    <h2>The unlock</h2>
+    <p class="lede"><code>ucc batchexport &lt;package&gt;.u Class uc &lt;dir&gt;</code> exports full UnrealScript
+    source, <em>including defaultproperties</em>. Run across every package it produced
+    <strong>3,341 class files</strong>. The entire game's logic is now readable text on disk, which is what
+    makes the rest of this page possible &mdash; most of what follows was read out of the game's own source
+    rather than guessed at or found online.</p>
+    <p class="mono faint" style="font-size:12.2px;line-height:1.8;margin-bottom:0">engine 349 &middot; ctgame 211 &middot; CTInventory 199 &middot; ctcharacters 96 &middot; gameplay 93 &middot; editor 78 &middot; uwindow 78 &middot; mpgame 56 &middot; xinterfacectmenus 53 &middot; udebugmenu 40 &middot; core 39 &middot; ctaudio 27 &middot; ctmarkers 25 &middot; <b style="color:var(--amber-2)">Mod 5</b> &nbsp;|&nbsp; defaults: cteffects 575 &middot; properties 522 &middot; audioenv 194 &middot; accessoryproperties 170 &middot; reverb 111 &middot; karmaprops 105 &middot; markerproperties 61</p>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--green)">Can do &mdash; proven</h2>
+    <h3>Read everything</h3>
+    <ul>
+      <li>Decompile all UnrealScript with defaults. <span class="tag t-meas">Done</span></li>
+      <li>Dump any package's summary, export and import tables (<code>ucc pkg list</code>).</li>
+      <li>Export textures, sounds, and bumpmaps as normal maps.</li>
+      <li>Parse Karma physics &mdash; the files are plain XML.</li>
+    </ul>
+    <h3>Tune gameplay without touching a single package</h3>
+    <p>PropertyOverrides text files reach the whole numeric surface. Real values, read from the source:</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Thing</th><th>Actual shipped values</th></tr>
+      <tr><td>Player</td><td class="mono">MaxHealth=200 · ShieldRechargeRate=20 · ShieldRechargeDelay=3</td></tr>
+      <tr><td>Squadmates</td><td class="mono">MaxHealth=400 · MaxShields=50 · <b style="color:var(--amber-2)">bCannotDie=True</b></td></tr>
+      <tr><td>Battle Droid</td><td class="mono">MaxHealth=100 · LeftArmHealth=80 · RightArmHealth=80 · DamageMultipliers.Head=<b>0.09</b></td></tr>
+      <tr><td>Droideka</td><td class="mono">MaxHealth=400 · MaxShields=800</td></tr>
+      <tr><td>Weapon damage</td><td class="mono">DC17m 2 · DC15s 5 · sniper 1 (squad sniper 4) · anti-armor 4 · rocket 6 · bowcaster skewer 8 · Elite beam 8</td></tr>
+      <tr><td>Melee</td><td class="mono">DC17m 220 · DC15s 100</td></tr>
+      <tr><td>Weapon feel</td><td class="mono">PickupAmmoCount=120 · ReloadCount=60 · AimError=15 · OptimalDist=2500 · ZoomDamageMultiplier=1.5 · recoil + WeaponKick tuples</td></tr>
+    </table></div>
+    <div class="note good"><strong>Squad immortality is one flag.</strong> Delta squad don't survive because
+    they have a big health bar &mdash; they carry <code>bCannotDie=True</code>. A permadeath-squad mod is a
+    single line of text in a file that touches nothing else.</div>
+    <p class="muted" style="margin-bottom:0">Also reachable as plain data: per-bone dismemberment tables,
+    finishing-move sets, ragdoll damping and friction, damage-variance curves per target family, per-material
+    hit decals, and per-planet variants of every door, mover and turret.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--green)">The hook nobody advertises</h2>
+    <p>SWRC Fix ships a five-class package called <code>Mod</code>. One of those classes is
+    <code>FunctionOverride</code>, and it is a <strong>native UnrealScript function-hooking primitive</strong>:</p>
+    <p class="mono" style="background:var(--raise);border:1px solid var(--line);padding:10px 12px;border-radius:2px;color:var(--amber-2)">
+    Init(TargetObject, TargetFuncName, OverrideObject, OverrideFuncName)</p>
+    <p>It redirects any UnrealScript call &mdash; one instance or an entire class &mdash; to a replacement
+    function, with the original still callable from inside the override and the original object reachable as
+    <code>CurrentSelf</code>. The Fix uses it on the player's zoom and FOV, view shake, weapon FOV, the menu
+    system and MP HUD arms.</p>
+    <div class="note good"><strong>That is hot-patching game and engine logic with zero package modification.</strong>
+    It is the real foundation for any behavioural mod, and it sidesteps the entire binary-writing problem for
+    logic changes the way PropertyOverrides sidesteps it for numbers.</div>
+  </div>
+
+  <div class="card">
+    <h2>Two subsystems, mapped from source</h2>
+    <h3>The squad-command markers</h3>
+    <p>Three layers: <code>CTMarker</code> (extends a native <code>SquadMarker</code>) →
+    <code>Marker&lt;Type&gt;Native</code> (the C++ state machine: <code>Initiate</code>, <code>Update</code>,
+    <code>FinishMarker</code>) → <code>Marker&lt;Type&gt;</code> (a thin placeable wrapper holding defaults).
+    Types: door breach, snipe, anti-armor, grenade, turret, demolition, proximity mine, disarm trap, hack door,
+    hack terminal, trigger loop, get bacta, revive.</p>
+    <p>Specialisation is hard-coded through <code>PreferredPawnClass</code> &mdash; <b>07 is the sniper, 40 the
+    hacker, 62 demolitions</b> &mdash; and it is editable. A door breach spawns its grenade from the
+    participant's <code>wrist_L</code> bone and throws it at <code>2.0 × (target − location)</code> with a Z arc
+    of 120. The grenade marker contains a <em>commented-out arc-preview mesh system</em> &mdash; a cut feature
+    still sitting in the shipped source.</p>
+    <p class="muted">New marker instances and retuning are easy. A genuinely new <em>order type</em> is native
+    C++ &mdash; or a <code>FunctionOverride</code> hook.</p>
+    <h3>The music engine is iMuse</h3>
+    <p>Two things everyone gets wrong here, including me before I read it. First, <code>ctaudio</code> is
+    <em>not</em> the music system &mdash; all 27 classes extend <code>PawnAudioTable</code> and are per-character
+    voice-line tables. Second, the real system is native, lives in <code>engine</code>, and
+    <code>Actor.uc</code> names it outright:</p>
+    <p class="mono" style="background:var(--raise);border:1px solid var(--line);padding:10px 12px;border-radius:2px;color:var(--amber-2)">
+    native final function SetImuseState(...)<br>EnableBattleEngine(bool)<br>SetBattleEngineParams(criteria, baddieCount, radiusInner, radiusOuter)<br>SetBattleMusicMulti(...) · ForceBattleMusic() · ForceBattleFlourish()</p>
+    <p><strong>Republic Commando's soundtrack runs on a LucasArts iMuse-derived interactive music engine with a
+    proximity-and-threat "Battle Engine" driving escalation</strong> &mdash; and every knob is a
+    <code>LevelInfo</code> property: <code>BattleMusic</code>, <code>BattleBaddieThreshold</code>,
+    <code>BattleRadiusInner</code>, <code>BattleRadiusOuter</code>, <code>BattleCriteria</code>. Scriptable per
+    mission through <code>ACTION_PlayMusic</code> and friends.</p>
+    <p class="muted" style="margin-bottom:0">296 ogg files: <span class="mono">_ol</span> 144,
+    <span class="mono">_ep</span> 70, <span class="mono">_lp</span> 58. <span class="tag t-inf">Inference</span>
+    loop bed / entry stinger / overlay layer. Consistent with iMuse and with the layering call, but untested
+    &mdash; and one file swap would settle it. None of this is documented anywhere online.</p>
+  </div>
+
+  <div class="card">
+    <h2>Savegames are level packages</h2>
+    <p><span class="tag t-meas">Measured</span>A <code>.cts</code> save carries the Unreal package magic,
+    version 159, licensee 1. <code>ucc pkg list</code> reads one today: <strong>2,868 names, 1,707 objects,
+    132 KB</strong>, headed by <code>Level myLevel</code>.</p>
+    <p class="mono faint" style="font-size:12.3px">ReachSpec ×422 · StaticMeshActor ×187 · KarmaParamsCollision ×170 · PathNode ×76 · GoalQueue ×50 · CoverPoint ×39 · ACTION_WaitForEvent ×35 · Light ×33 · SpawnPoint ×22 · ScriptedTrigger ×18 · PawnFactory ×16</p>
+    <p>A save is a serialised snapshot of the entire level, in the same container format as everything else in
+    the game. The same parser reads maps, script, textures and saves. The profile beside it
+    (<code>Profile_&lt;name&gt;\User.ini</code>) is plain text.</p>
+    <p class="muted" style="margin-bottom:0">Nobody has published anything on this format. Reading is solved as
+    of today; writing waits on the same package-writer problem as everything else.</p>
+  </div>
+
+  <div class="card">
+    <h2>Cut content that is still entirely present</h2>
+    <p>Not leftovers &mdash; complete, stat-tuned, AI-hooked classes sitting in the shipped game:</p>
+    <ul>
+      <li><b>General Grievous.</b> <code>ctcharacters\Grievous.uc</code>, placeable, with a real skeletal mesh,
+      <code>ControllerClass=CTBot</code>, its own team index, a preferred counter-grenade, plus
+      <code>GrievousShip</code>, <code>GrievousGuard</code>, a dedicated guard perch, and full stat blocks for
+      his staff, homing missile and missile rack. <b>A near-complete cut boss encounter.</b></li>
+      <li><b>Tarfful</b> and <b>Sun Fac</b> &mdash; named characters, each with a hologram variant, implying cut
+      briefing appearances.</li>
+      <li><b>AT-TE walker</b> with cannon and turret base, the large <b>Spider Droid</b>, gunship, dropship,
+      Separatist ship, Geonosian fighter.</li>
+      <li>Per-enemy-family <b>perch</b> classes &mdash; drone, elite, scav, warrior, Grievous guard &mdash; an
+      underused stationary-AI mechanic.</li>
+      <li>Weapons: Yoda staff, Sun Fac pike, force pike, elite beam, rocket launcher, SMG, shotgun and a slaver
+      shotgun, land mine, missile and heavy turrets, Wookiee welder, scav beam, remote droid, restraining bolt,
+      and two placeholder-named test weapons called <code>Baby</code> and <code>Boy</code>.</li>
+      <li>A showcase map called <code>1138</code> &mdash; <b>and it is still sitting in the Maps folder.</b></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--amber-2)">Can't do yet</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Blocked</th><th>Why</th><th>Route out</th></tr>
+      <tr><td><b>Write binary packages</b></td><td>No writer exists in any language for UE2; UCC has no import.</td><td>Build one behind a byte-exact harness &mdash; or avoid it entirely.</td></tr>
+      <tr><td><b><code>#exec</code> + <code>ucc make</code> on this game</b></td><td>Proven for UE2 generally, <em>never tested on Republic Commando</em>. The game shipped no <code>Code\</code> tree.</td><td>Test it. Highest-value experiment remaining.</td></tr>
+      <tr><td><b>New skeletal meshes and animations</b></td><td>Pipeline is documented generically (Blender PSK/PSA → <code>#exec MESH MODELIMPORT</code> → <code>ucc make</code>). Nobody has shown it working here. The RTX mod claims it; unverified.</td><td>Depends on the row above.</td></tr>
+      <tr><td><b>New squad order types</b></td><td>The marker state machines are compiled C++.</td><td><code>FunctionOverride</code>, or a native mod.</td></tr>
+      <tr><td><b>Savegame writing</b></td><td>Format now known; no writer, and serialisation is native.</td><td>Depends on the package writer. Reading works today.</td></tr>
+      <tr><td><b>Stable co-op</b></td><td>The existing mod breaks if the second player joins before certain scripted sequences &mdash; squad commands die and the campaign can't progress. Unmaintained for years.</td><td>Real work on scripted-sequence replication.</td></tr>
+      <tr><td><b>Karma physics authoring</b></td><td>The authoring tool was a 2002-era 3DS Max plugin. No published schema.</td><td>The files are XML. Reverse it by example &mdash; tractable.</td></tr>
+      <tr><td><b>Restoring the other cut maps</b></td><td><code>1138</code> is present; geo_02, geo_03b and the missing Kashyyyk maps are not in the data.</td><td>Load <code>1138</code>. Rebuild the rest from scratch, or don't.</td></tr>
+      <tr><td><b>Netcode beyond the engine's rules</b></td><td>Can't override parent replication statements; client-to-server variable replication only works for your own pawn; replication isn't recursive.</td><td>Native mod, or accept it.</td></tr>
+    </table></div>
+    <p class="faint" style="margin-bottom:0">Smaller open items: the contents of <code>packages.md5</code>,
+    umodel support, whether the music suffixes mean what I think, whether a stock map survives a resave, and
+    whether this game does lip sync at all.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--red)">Can never do</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Thing</th><th>Why it is permanent</th></tr>
+      <tr><td><b>Restore the cut dialogue</b></td><td>The subtitles survive &mdash; briefings for three worlds, a Kamino prologue with Taun We, an ending where Delta 38 promises to go back for Sev. <b>The audio was never shipped.</b> No tool recovers data that isn't there. Re-voicing it is new content, not restoration.</td></tr>
+      <tr><td><b>Use the Xbox audio DSP image</b></td><td><span class="tag t-meas">Measured</span><code>ct_dsp_image.dspfx</code> opens with the magic <code>DSPBUILDER</code> and declares <code>I3DL2Reverb</code>, <code>XTalk</code>, <code>XTalkToLFE</code>, a voice rate converter and a reverb preset named "Padded Cell". It is an <b>Xbox MCPX audio-DSP effect graph</b> &mdash; console silicon. The <code>.bin</code> beside it on this PC install is <b>entirely zero bytes</b>. Dead weight. No online source identifies this format.</td></tr>
+      <tr><td><b>Add C++ members not mirrored in UnrealScript</b></td><td>The two class layouts must be byte-identical or the game crashes. Architectural, not a bug.</td></tr>
+      <tr><td><b>Mix compilers in native modules</b></td><td>No binary-compatibility guarantee. Stated by the SDK authors.</td></tr>
+      <tr><td><b><code>CT.exe</code> on the Amazon build</b></td><td>DRM. Stated outright by the Fix's author.</td></tr>
+      <tr><td><b>Steam Workshop</b></td><td>Never integrated. The game predates it.</td></tr>
+      <tr><td><b>GameSpy</b></td><td>Shut down permanently. OpenSpy is the replacement, already configured here.</td></tr>
+      <tr><td><b>Terrain above 128</b></td><td>Hard engine cap, powers of two only.</td></tr>
+      <tr><td><b>Modern rendering in-engine</b></td><td>Fixed-function-era UE2, 32-bit. Path tracing only arrives through RTX Remix as an external translation layer.</td></tr>
+    </table></div>
+    <div class="note"><strong>An honest note on this column.</strong> Nothing here is dead because the community
+    declared it dead &mdash; no such declaration exists anywhere. It is dead because of physics: absent data,
+    console hardware, shut-down infrastructure, engine architecture. Everything else belongs one column to the
+    left. Given that a single afternoon moved savegames, the music engine and the entire script surface from
+    unknown to mapped, expect that middle column to keep shrinking.</div>
   </div>
 </section>
 
