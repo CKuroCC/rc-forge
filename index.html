@@ -1,0 +1,643 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RC Forge</title>
+<meta name="description" content="Programmatic modding toolchain for Star Wars: Republic Commando (2005). Verified formats, risk register, roadmap.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Saira+Condensed:wght@500;600;700&family=Saira:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0a0c0d; --ink:#0d1012; --panel:#111618; --panel2:#161d20; --raise:#1d2529;
+  --line:#232d31; --line2:#33424a;
+  --amber:#e8a33d; --amber-2:#ffc46b; --amber-dim:#8d6420;
+  --visor:#4fb3c9; --visor-dim:#2a6b7a;
+  --text:#dfe6e8; --muted:#8b9aa0; --faint:#5f6e74;
+  --red:#cf5340; --green:#7fb069; --violet:#8f7bb3;
+  --shadow:0 1px 0 rgba(255,255,255,.03),0 10px 26px -14px rgba(0,0,0,.9);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:'Saira',system-ui,sans-serif;font-size:15.5px;line-height:1.55;
+  background-image:
+    radial-gradient(1100px 460px at 50% -14%,rgba(232,163,61,.10),transparent 70%),
+    radial-gradient(760px 380px at 92% 104%,rgba(79,179,201,.06),transparent 70%);
+  background-attachment:fixed;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 90px}
+
+header{position:sticky;top:0;z-index:20;
+  background:linear-gradient(to bottom,rgba(10,12,13,.97) 62%,rgba(10,12,13,.84));
+  backdrop-filter:blur(9px);border-bottom:1px solid var(--line);margin:0 -20px 26px;padding:16px 20px 0}
+.brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+h1{font-family:'Saira Condensed',sans-serif;font-size:28px;letter-spacing:.24em;text-transform:uppercase;
+  margin:0;font-weight:700;
+  background:linear-gradient(180deg,var(--amber-2),var(--amber-dim));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.brand .sub{color:var(--faint);font-size:12.5px;letter-spacing:.06em}
+.brand .live{margin-left:auto;font-size:11.5px;color:var(--muted);white-space:nowrap;
+  font-family:'JetBrains Mono',monospace}
+.dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);
+  margin-right:7px;vertical-align:1px;box-shadow:0 0 7px var(--amber)}
+nav{display:flex;gap:0;flex-wrap:wrap;margin-top:12px;overflow-x:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;color:var(--muted);
+  padding:10px 15px;font-family:'Saira Condensed',sans-serif;font-size:12.5px;letter-spacing:.16em;
+  text-transform:uppercase;cursor:pointer;transition:color .15s,border-color .15s;white-space:nowrap;font-weight:600}
+.tab:hover{color:var(--text)}
+.tab.on{color:var(--amber-2);border-bottom-color:var(--amber)}
+
+.card{background:linear-gradient(180deg,var(--panel),var(--ink));
+  border:1px solid var(--line);border-radius:3px;padding:17px 19px;margin-bottom:15px;box-shadow:var(--shadow)}
+h2{font-family:'Saira Condensed',sans-serif;font-size:13px;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--amber);margin:0 0 12px;font-weight:700;
+  padding-bottom:8px;border-bottom:1px solid var(--line)}
+h3{font-family:'Saira Condensed',sans-serif;font-size:15px;letter-spacing:.09em;color:var(--text);
+  margin:20px 0 8px;font-weight:600;text-transform:uppercase}
+h3:first-child{margin-top:0}
+p{margin:0 0 11px}
+a{color:var(--visor);text-decoration:none;border-bottom:1px solid rgba(79,179,201,.28)}
+a:hover{color:var(--amber-2);border-bottom-color:var(--amber-dim)}
+code,.mono{font-family:'JetBrains Mono',monospace;font-size:12.6px}
+code{background:var(--raise);border:1px solid var(--line);border-radius:2px;padding:1px 5px;color:var(--amber-2)}
+.lede{color:var(--muted);font-size:16px;max-width:74ch}
+.grid{display:grid;gap:15px}
+@media(min-width:840px){.grid.two{grid-template-columns:1fr 1fr}.grid.three{grid-template-columns:repeat(3,1fr)}}
+ul{margin:0 0 11px;padding-left:19px}
+li{margin-bottom:5px}
+.muted{color:var(--muted)}
+.faint{color:var(--faint)}
+
+.tag{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid;margin-right:6px;vertical-align:1px}
+.t-meas{color:var(--green);border-color:rgba(127,176,105,.45);background:rgba(127,176,105,.09)}
+.t-doc{color:var(--visor);border-color:rgba(79,179,201,.4);background:rgba(79,179,201,.08)}
+.t-inf{color:var(--violet);border-color:rgba(143,123,179,.42);background:rgba(143,123,179,.09)}
+.t-open{color:var(--amber);border-color:rgba(232,163,61,.42);background:rgba(232,163,61,.09)}
+.t-dead{color:var(--faint);border-color:var(--line2)}
+
+.tiles{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-bottom:16px}
+.tile{background:linear-gradient(180deg,var(--panel2),var(--ink));border:1px solid var(--line);
+  border-radius:3px;padding:13px 15px}
+.tile .k{font-family:'JetBrains Mono',monospace;font-size:10.5px;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--faint);margin-bottom:5px}
+.tile .v{font-family:'Saira Condensed',sans-serif;font-size:25px;font-weight:700;color:var(--amber-2);line-height:1.1}
+.tile .n{font-size:12px;color:var(--muted);margin-top:3px}
+
+.tbl-wrap{overflow-x:auto;margin-bottom:12px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;min-width:520px}
+th{text-align:left;font-family:'Saira Condensed',sans-serif;font-size:11px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--faint);font-weight:600;
+  padding:7px 11px 7px 0;border-bottom:1px solid var(--line2);white-space:nowrap}
+td{padding:8px 11px 8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.mono,th.mono{font-family:'JetBrains Mono',monospace;font-size:12.4px}
+
+.pipe{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin:6px 0 14px}
+.step{border:1px solid var(--line2);border-radius:3px;padding:12px 13px;background:var(--panel2);position:relative}
+.step .n{font-family:'JetBrains Mono',monospace;font-size:10.5px;color:var(--faint);letter-spacing:.1em}
+.step .t{font-family:'Saira Condensed',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;
+  text-transform:uppercase;margin:4px 0 4px}
+.step .d{font-size:12.5px;color:var(--muted);line-height:1.45}
+.step.s1{border-color:rgba(127,176,105,.5)} .step.s1 .t{color:var(--green)}
+.step.s2{border-color:rgba(127,176,105,.35)} .step.s2 .t{color:var(--green)}
+.step.s3{border-color:rgba(232,163,61,.45)} .step.s3 .t{color:var(--amber-2)}
+.step.s4{border-color:rgba(207,83,64,.45)} .step.s4 .t{color:var(--red)}
+
+.note{border-left:2px solid var(--amber);background:rgba(232,163,61,.055);padding:11px 14px;
+  margin:0 0 13px;border-radius:0 3px 3px 0}
+.note.good{border-left-color:var(--green);background:rgba(127,176,105,.055)}
+.note.bad{border-left-color:var(--red);background:rgba(207,83,64,.055)}
+.note strong{color:var(--text)}
+
+.road{list-style:none;padding:0;margin:0}
+.road li{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);align-items:flex-start}
+.road li:last-child{border-bottom:0}
+.road .mark{font-family:'JetBrains Mono',monospace;font-size:11px;padding:2px 7px;border-radius:2px;
+  border:1px solid var(--line2);color:var(--faint);white-space:nowrap;margin-top:2px;min-width:74px;text-align:center}
+.road li.done .mark{color:var(--green);border-color:rgba(127,176,105,.45)}
+.road li.now .mark{color:var(--amber);border-color:rgba(232,163,61,.5)}
+.road .body{flex:1}
+.road .body b{font-weight:600;color:var(--text)}
+.road .body span{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+
+section{display:none}
+section.on{display:block}
+footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
+  color:var(--faint);font-size:12.5px;display:flex;gap:14px;flex-wrap:wrap;justify-content:space-between}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div class="brand">
+    <h1>RC Forge</h1>
+    <span class="sub">Star Wars: Republic Commando &mdash; modding toolchain</span>
+    <span class="live"><span class="dot"></span>RECON COMPLETE &middot; 2026-09-14</span>
+  </div>
+  <nav id="nav">
+    <button class="tab on" data-s="status">Status</button>
+    <button class="tab" data-s="formats">Formats</button>
+    <button class="tab" data-s="tools">Toolchain</button>
+    <button class="tab" data-s="arch">Architecture</button>
+    <button class="tab" data-s="risks">Risk register</button>
+    <button class="tab" data-s="road">Roadmap</button>
+    <button class="tab" data-s="scene">The scene</button>
+  </nav>
+</header>
+
+<section id="status" class="on">
+  <div class="card">
+    <h2>What this is</h2>
+    <p class="lede">A programmatic modding layer for a twenty-one-year-old Unreal Engine 2 game. Fourth in
+    the forge family after <a href="https://er-forge.vercel.app">ER Forge</a> (Elden Ring),
+    <a href="https://kotor-forge.vercel.app">KOTOR Forge</a> and <a href="https://ac6-forge.vercel.app">AC6 Forge</a>:
+    an MCP server that reads and writes game state directly, so changes happen in a sentence instead of an afternoon
+    in a 2005 editor.</p>
+    <p class="muted">Day one was deliberately spent measuring rather than building. Three assumptions that would
+    have shaped the whole architecture turned out to be wrong &mdash; two of them in our favour.</p>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="k">Game files indexed</div><div class="v">802</div><div class="n">MD5 manifest, full vanilla baseline</div></div>
+    <div class="tile"><div class="k">Package versions</div><div class="v">134&ndash;159</div><div class="n">licensee mode 1, measured</div></div>
+    <div class="tile"><div class="k">UCC commandlets</div><div class="v">18</div><div class="n">verified running locally</div></div>
+    <div class="tile"><div class="k">Binary writers needed</div><div class="v">0</div><div class="n">for v1 &mdash; three text/tool paths exist</div></div>
+    <div class="tile"><div class="k">Risks retired day one</div><div class="v">3</div><div class="n">of 13 on the register</div></div>
+  </div>
+
+  <div class="grid two">
+    <div class="card">
+      <h2>Done</h2>
+      <ul>
+        <li>Install located, fingerprinted (exe SHA-256 + launcher version), variant recorded as Steam.</li>
+        <li>Full vanilla snapshot of <code>System\</code> and <code>Save\</code> &mdash; 212 files &mdash; plus an
+        802-file MD5 manifest of all of <code>GameData</code>.</li>
+        <li>Toolchain pulled: SWRC Fix 2.15 &amp; 2.13, the CT source tree, FirstPersonPlayer, UELib, UE Explorer 1.6.2.</li>
+        <li>SWRC Fix 2.15 installed; original <code>System.ini</code> preserved; language untouched.</li>
+        <li><code>UCC.exe</code> smoke-tested; full commandlet surface captured.</li>
+        <li>Every asset container's header dumped and versioned by hand.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h2>Not yet</h2>
+      <ul>
+        <li><b>No <code>rc-forge</code> code exists.</b> The design is written; not a line of Python is shipped.</li>
+        <li>umodel / UE Viewer &mdash; the direct download 404s and the page is JS-gated. Needs a browser pass.</li>
+        <li><code>packages.md5</code> export table not yet decoded &mdash; we know its shape, not its contents.</li>
+        <li>The round-trip experiment that decides the whole write strategy is still unrun. See Architecture.</li>
+      </ul>
+      <p class="faint" style="margin-bottom:0">Nothing on this page is a plan dressed up as progress. If it says
+      done, it ran on the machine.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Three corrections to the received wisdom</h2>
+    <div class="note good"><span class="tag t-meas">Measured</span><strong><code>.ctm</code> is not proprietary.</strong>
+      File-type reference sites call Republic Commando's map format a closed binary requiring special software.
+      It carries the plain Unreal package magic <code>0x9E2A83C1</code>, version 159, licensee 1 &mdash; an ordinary
+      UE2 map package with the extension renamed. No special casing, no reverse engineering.</div>
+    <div class="note good"><span class="tag t-meas">Measured</span><strong>The Karma physics files are XML.</strong>
+      <code>.ka</code> and <code>.kaw</code> open with <code>&lt;?xml version="1.0"?&gt;</code>. The research budget
+      allocated to reversing them went to zero.</div>
+    <div class="note bad"><span class="tag t-meas">Measured</span><strong>The game did ship an editor.</strong>
+      The community line is that Republic Commando shipped without one. <code>unrealed.exe</code> sits in
+      <code>GameData\System</code> on the retail Steam build. What it shipped without was <code>ucc.exe</code>,
+      the compiler &mdash; which the community rebuilt from scratch.</div>
+  </div>
+</section>
+
+<section id="formats">
+  <div class="card">
+    <h2>Container layout</h2>
+    <p>Every asset file in the game is the same thing wearing different extensions: a standard Unreal package.
+    Header shape, confirmed byte-by-byte against six file types:</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Offset</th><th>Size</th><th>Field</th><th>Observed</th></tr>
+      <tr><td class="mono">0x00</td><td class="mono">4</td><td>Signature</td><td class="mono">0x9E2A83C1</td></tr>
+      <tr><td class="mono">0x04</td><td class="mono">2</td><td>Package version</td><td class="mono">134 / 154 / 157 / 158 / 159</td></tr>
+      <tr><td class="mono">0x06</td><td class="mono">2</td><td>Licensee mode</td><td class="mono">1</td></tr>
+      <tr><td class="mono">0x08</td><td class="mono">4</td><td>Package flags</td><td class="mono">0x00000001</td></tr>
+      <tr><td class="mono">0x0C</td><td class="mono">4+4</td><td>Name count / offset</td><td class="mono">offset always 0x40</td></tr>
+      <tr><td class="mono">0x14</td><td class="mono">4+4</td><td>Export count / offset</td><td class="mono">&mdash;</td></tr>
+      <tr><td class="mono">0x1C</td><td class="mono">4+4</td><td>Import count / offset</td><td class="mono">&mdash;</td></tr>
+      <tr><td class="mono">0x24</td><td class="mono">16</td><td>GUID</td><td class="mono">&mdash;</td></tr>
+    </table></div>
+    <div class="note"><span class="tag t-inf">Inference</span>The version spread across extensions means a parser
+    must branch on the <em>header version</em>, never on the file extension. Building that in from line one is
+    cheap; retrofitting it is not.</div>
+  </div>
+
+  <div class="card">
+    <h2>Measured per file type</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Sample</th><th>Ext</th><th class="mono">Ver</th><th class="mono">Lic</th><th>Holds</th></tr>
+      <tr><td class="mono">Maps\geo_01a.ctm</td><td class="mono">.ctm</td><td class="mono">159</td><td class="mono">1</td><td>Level / map</td></tr>
+      <tr><td class="mono">System\ctgame.u</td><td class="mono">.u</td><td class="mono">159</td><td class="mono">1</td><td>UnrealScript</td></tr>
+      <tr><td class="mono">Properties\properties.u</td><td class="mono">.u</td><td class="mono">159</td><td class="mono">1</td><td>Class defaults &mdash; the gameplay surface</td></tr>
+      <tr><td class="mono">Sounds\gen_sound.uax</td><td class="mono">.uax</td><td class="mono">159</td><td class="mono">1</td><td>Audio</td></tr>
+      <tr><td class="mono">Animations\clone.ukx</td><td class="mono">.ukx</td><td class="mono">158</td><td class="mono">1</td><td>Skeletal animation</td></tr>
+      <tr><td class="mono">Textures\clonetextures.utx</td><td class="mono">.utx</td><td class="mono">157</td><td class="mono">1</td><td>Textures</td></tr>
+      <tr><td class="mono">StaticMeshes\weapons.usx</td><td class="mono">.usx</td><td class="mono">157</td><td class="mono">1</td><td>Static meshes</td></tr>
+      <tr><td class="mono">Prefabs\mpprefabs.upx</td><td class="mono">.upx</td><td class="mono">154</td><td class="mono">1</td><td>Prefabs</td></tr>
+      <tr><td class="mono">System\packages.md5</td><td class="mono">.md5</td><td class="mono">134</td><td class="mono">1</td><td>17 <code>PackageCheckInfo</code> entries</td></tr>
+      <tr><td class="mono">KarmaData\clone.ka</td><td class="mono">.ka</td><td colspan="2" class="mono">XML</td><td><code>&lt;KARMA ka_file_&hellip;&gt;</code></td></tr>
+      <tr><td class="mono">KarmaData\ct.kaw</td><td class="mono">.kaw</td><td colspan="2" class="mono">XML</td><td><code>&lt;KAT_WORKSPACE&gt;</code></td></tr>
+    </table></div>
+    <p class="faint" style="margin-bottom:0">A commonly repeated figure gives Republic Commando as "package version
+    2226, licensee 134&ndash;159." That is a misreading of a compatibility table. The real numbers are above.</p>
+  </div>
+
+  <div class="card">
+    <h2><code>packages.md5</code> &mdash; the integrity check that isn't one</h2>
+    <p><span class="tag t-meas">Measured</span>It is itself a 2,144-byte Unreal package exporting a
+    <code>PackageCheckInfo</code> class with seventeen numbered instances, each carrying a <em>pair</em> of MD5
+    strings &mdash; one uppercase, one lowercase.</p>
+    <p><span class="tag t-doc">Documented</span>The mechanism is a <strong>multiplayer client-connect check over
+    script packages only</strong>. It does not gate single player and it does not cover textures, sounds or meshes.
+    The SWRC Fix author states the practical consequence outright: because no original game packages are modified,
+    multiplayer keeps working.</p>
+    <div class="note good"><strong>The rule that falls out of this:</strong> never rewrite a stock <code>.u</code>,
+    and the integrity manifest is simply never a topic. Every write surface below respects that.</div>
+    <p class="muted" style="margin-bottom:0"><span class="tag t-open">Open</span>Which seventeen packages does it
+    actually cover? Decoding its export table is an early task, not a blocker.</p>
+  </div>
+</section>
+
+<section id="tools">
+  <div class="card">
+    <h2>Installed and verified</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Tool</th><th>What it gives us</th><th>State</th></tr>
+      <tr><td><b>SWRC Fix 2.15</b><br><span class="faint mono">CT.exe &middot; Mod.dll &middot; Mod.u &middot; OpenGLDrv.dll</span></td>
+        <td>Bump-mapping crash fix, native resolution, FOV slider, FPS limiter, OpenGL 4.5 renderer, five separate
+        UnrealEd crash fixes, 4 GB patch on the editor, restored server browser. And the two features below.</td>
+        <td><span class="tag t-meas">Installed</span></td></tr>
+      <tr><td><b>UCC.exe</b><br><span class="faint">rebuilt by Leon0628</span></td>
+        <td>The compiler and commandlet runner the game never shipped. 18 commandlets.</td>
+        <td><span class="tag t-meas">Verified</span></td></tr>
+      <tr><td><b>CT source tree</b></td>
+        <td>Reverse-engineered C++ headers for the whole engine, plus UCC, Mod, ModMPGame, ModEd and OpenGLDrv
+        projects. The closest thing to ground truth that exists.</td>
+        <td><span class="tag t-meas">Local</span></td></tr>
+      <tr><td><b>UELib</b> / Unreal-Library</td>
+        <td>Mature C# UE1/2/3 parser and UnrealScript decompiler with explicit Republic Commando support. Not Python
+        &mdash; but the reference our parser gets graded against.</td>
+        <td><span class="tag t-meas">Local</span></td></tr>
+      <tr><td><b>UE Explorer 1.6.2</b></td><td>GUI front end over UELib for reading decompiled script.</td>
+        <td><span class="tag t-meas">Local</span></td></tr>
+      <tr><td><b>unrealed.exe</b></td><td>Ships with the game. Crash-fixed and memory-fixed by Mod.dll.</td>
+        <td><span class="tag t-meas">Present</span></td></tr>
+      <tr><td><b>umodel / UE Viewer</b></td><td>Asset viewer and exporter.</td>
+        <td><span class="tag t-open">Blocked</span></td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>UCC commandlets &mdash; verified on this machine</h2>
+    <p class="mono faint" style="font-size:12.4px;line-height:1.9">HelloWorld &nbsp; master &nbsp; <b style="color:var(--amber-2)">make</b> &nbsp; conform &nbsp; <b style="color:var(--amber-2)">batchexport</b> &nbsp; packageflag &nbsp; datarip &nbsp; <b style="color:var(--amber-2)">pkg</b> &nbsp; mapconvert &nbsp; dxtconvert &nbsp; analyzecontent &nbsp; modifypackageflags &nbsp; ImportAse &nbsp; fontupdate &nbsp; server &nbsp; compress &nbsp; decompress &nbsp; <b style="color:var(--amber-2)">exportbumpmaps</b></p>
+    <h3>The three that matter</h3>
+    <div class="grid three">
+      <div class="card" style="margin:0"><h3 style="color:var(--amber-2)"><code>pkg</code></h3>
+        <p class="mono faint" style="font-size:12px">ucc pkg import|export texture|sound &lt;package&gt; &lt;dir&gt;</p>
+        <p class="muted" style="margin:0">Round-trips an entire texture or sound package to and from a directory of
+        loose files. Texture and audio mods with no binary writing whatsoever.</p></div>
+      <div class="card" style="margin:0"><h3 style="color:var(--amber-2)"><code>make</code></h3>
+        <p class="mono faint" style="font-size:12px">ucc make [-All] [-Silent]</p>
+        <p class="muted" style="margin:0">Compiles UnrealScript from <code>Code\&lt;Package&gt;\Classes\*.uc</code>.
+        Real script modding through the game's own compiler.</p></div>
+      <div class="card" style="margin:0"><h3 style="color:var(--amber-2)"><code>batchexport</code></h3>
+        <p class="mono faint" style="font-size:12px">ucc batchexport pkg.ext class ext path</p>
+        <p class="muted" style="margin:0">Bulk extraction by class. Paired with <code>exportbumpmaps</code> for
+        normal maps as TGA.</p></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--green)">PropertyOverrides &mdash; the discovery that changed the design</h2>
+    <p>SWRC Fix 2.12 added a mechanism that is barely mentioned anywhere outside a changelog line, and it is the
+    single most important thing found today. Drop a text file at:</p>
+    <p class="mono" style="color:var(--amber-2)">GameData\System\PropertyOverrides\&lt;Package&gt;.&lt;Class&gt;.txt</p>
+    <p>containing UnrealScript <code>defaultproperties</code>-style assignments, and the game applies them at startup.
+    The shipped example, in full:</p>
+    <p class="mono" style="background:var(--raise);border:1px solid var(--line);padding:10px 12px;border-radius:2px;color:var(--amber-2)">
+    # Properties.BattleDroidBlasterTM.txt<br>AttachmentClass=Class'Properties.BattleDroidBlasterAttachmentTM'</p>
+    <div class="note good"><strong>Arbitrary class defaults, as plain text, with zero package modification.</strong>
+    Weapon damage, squad health, AI behaviour, physics constants &mdash; all reachable without touching a single byte
+    of a shipped file. Integrity manifest untouched. Multiplayer unaffected. Reversible by deleting a file.
+    One file per class, which also makes mod conflicts <em>detectable for free</em>.</div>
+  </div>
+
+  <div class="card">
+    <h2>Configuration layering</h2>
+    <p>Getting this backwards is the classic Unreal time-sink, so it is worth stating flatly:</p>
+    <ul>
+      <li><code>GameData\System\*.ini</code> &mdash; <b>defaults. Read-only by policy.</b> This is where you learn
+      what the stock value is.</li>
+      <li><code>GameData\Save\System.ini</code> and <code>Save\Profile_&lt;name&gt;\User.ini</code> &mdash;
+      <b>the live overrides.</b> The game generates these with most values commented out, and values here win.
+      Edit the first one and see no effect, and this is why.</li>
+    </ul>
+    <p class="muted" style="margin-bottom:0">Console handles worth knowing: <code>set SWRCFix FOV</code>,
+    <code>SetFpsLimit</code>, <code>userendev mod|d3d|opengl</code>, <code>flushresources</code>,
+    <code>EditActor</code>.</p>
+  </div>
+</section>
+
+<section id="arch">
+  <div class="card">
+    <h2>The governing principle</h2>
+    <p class="lede">Always prefer the write surface that cannot corrupt anything. Republic Commando hands us three
+    of them before a binary package writer is ever needed &mdash; so v1 ships without one.</p>
+    <div class="pipe">
+      <div class="step s1"><div class="n">SAFEST</div><div class="t">ini overrides</div>
+        <div class="d">Text. <code>Save\System.ini</code> and per-profile <code>User.ini</code>. Reversible by
+        deleting a line.</div></div>
+      <div class="step s2"><div class="n">SAFE</div><div class="t">PropertyOverrides</div>
+        <div class="d">Text. One file per class. Full gameplay-tuning surface with no package touched.</div></div>
+      <div class="step s3"><div class="n">MEDIATED</div><div class="t">UCC</div>
+        <div class="d"><code>pkg import</code> for assets, <code>make</code> for script. The game's own tools do the
+        serialising.</div></div>
+      <div class="step s4"><div class="n">LAST RESORT &middot; v2+</div><div class="t">Binary writer</div>
+        <div class="d">Raw UE2 read-modify-write. Gated behind a byte-exact round-trip harness. Only if the tier
+        above proves insufficient.</div></div>
+    </div>
+    <div class="note"><strong>The one experiment that settles it.</strong> Does <code>ucc pkg import texture</code>
+    round-trip a stock <code>.utx</code> byte-identically? If yes, tier four may never need to be built at all.
+    Unrun as of today, and it is the highest-value thing left on the board.</div>
+  </div>
+
+  <div class="card">
+    <h2>Tool surface, v1</h2>
+    <div class="grid two">
+      <div>
+        <h3>Workspace &amp; safety</h3>
+        <ul class="mono" style="font-size:12.6px">
+          <li><b>forge_workspace</b> <span class="faint">&mdash; locate + fingerprint; refuses unknown installs</span></li>
+          <li><b>forge_status</b> <span class="faint">&mdash; what's installed, deployed, drifted</span></li>
+          <li><b>forge_backup / forge_revert</b></li>
+          <li><b>forge_verify</b> <span class="faint">&mdash; re-hash vs manifest, name the owner of each change</span></li>
+          <li><b>forge_selftest</b> <span class="faint">&mdash; permanent round-trip CI</span></li>
+        </ul>
+        <h3>Properties &mdash; the main event</h3>
+        <ul class="mono" style="font-size:12.6px">
+          <li><b>prop_query</b> <span class="faint">&mdash; find a class and its stock defaults</span></li>
+          <li><b>prop_override</b> <span class="faint">&mdash; write/merge a PropertyOverrides file</span></li>
+          <li><b>prop_diff</b> <span class="faint">&mdash; every active override vs stock</span></li>
+          <li><b>prop_clear</b></li>
+        </ul>
+      </div>
+      <div>
+        <h3>Config</h3>
+        <ul class="mono" style="font-size:12.6px">
+          <li><b>ini_query / ini_edit</b> <span class="faint">&mdash; writes to Save\ only, never System\</span></li>
+          <li><b>launch_profile</b> <span class="faint">&mdash; renderer, FPS, FOV, shake, bumpmaps, vsync</span></li>
+        </ul>
+        <h3>Assets &amp; script</h3>
+        <ul class="mono" style="font-size:12.6px">
+          <li><b>res_find</b> <span class="faint">&mdash; which package holds this object?</span></li>
+          <li><b>res_export / res_import</b> <span class="faint">&mdash; UCC wrappers</span></li>
+          <li><b>script_compile / script_decompile</b></li>
+        </ul>
+        <h3>Mods &amp; saves</h3>
+        <ul class="mono" style="font-size:12.6px">
+          <li><b>mod_survey / mod_install / mod_validate</b> <span class="faint">&mdash; provenance, no silent overwrite</span></li>
+          <li><b>save_list / save_backup / save_restore</b></li>
+          <li><b>save_repair</b> <span class="faint">&mdash; rebuild a damaged profile</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Why the parser gets written from scratch</h2>
+    <p>There is no maintained Python library for Unreal Engine 1 or 2 packages. Everything the search turns up is
+    UE4/UE5 era &mdash; <code>.pak</code> and <code>.uasset</code> tooling that does not apply. That is a real gap,
+    which is good news for whether this is worth building and bad news for how much can be borrowed.</p>
+    <ul>
+      <li><b>Read-only first.</b> Header, name table, import table, export table, object index. That alone powers
+      <code>res_find</code>, <code>prop_query</code>, <code>forge_verify</code> and the <code>packages.md5</code> decode.</li>
+      <li><b>Graded against UELib</b>, which has explicit Republic Commando support and sits in the tools folder.
+      Where our parse and UELib disagree, UELib is right until proven otherwise.</li>
+      <li><b>Version-aware from line one</b> &mdash; five package versions in one install.</li>
+      <li><b>Karma files get <code>xml.etree</code></b> and about nine lines of code.</li>
+    </ul>
+    <p class="faint" style="margin-bottom:0">Non-goals for v1: native C++ compilation, multiplayer matchmaking,
+    map geometry editing. The editor keeps that last job &mdash; the contribution here is making it launch and
+    behave, not replacing it.</p>
+  </div>
+</section>
+
+<section id="risks">
+  <div class="card">
+    <h2>Why this page has a risk register at all</h2>
+    <p class="lede">Projects like this rarely die of a dramatic bug. They die of a parser that silently corrupted
+    something in week three, or a maintainer who lost a weekend to a checksum that turned out not to matter.
+    So the failure modes got researched before the code got written.</p>
+    <p class="muted" style="margin-bottom:0">Thirteen risks went on the board. One day of measurement killed one
+    outright and defused two more. The scoreboard is honest about which ones are still fully live.</p>
+  </div>
+
+  <div class="card">
+    <h2>Tier 1 &mdash; bites in the first two weeks</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Risk</th><th>L / I</th><th>Design-around</th></tr>
+      <tr><td><b>No official SDK.</b> Native C++ mods need VS.NET-2003-era ABI matching; the CT wiki warns there is
+        no binary compatibility guarantee across compilers, and class layouts must stay byte-identical or the game
+        crashes.</td><td class="mono">High / High</td>
+        <td>rc-forge never compiles or links native code. <code>Mod.dll</code> and <code>CT.exe</code> are opaque
+        prerequisites it <em>detects and reports</em>. Native mods are drop-in files, full stop.</td></tr>
+      <tr><td><b>UE2 package writing is far harder than reading.</b> Absolute offsets in three tables, serial-size
+        fields to recompute, and script bytecode with absolute jumps that break silently when a body changes length.
+        The classic "worked once, corrupted it forever."</td>
+        <td class="mono">High / <span style="color:var(--red)">Silent corruption</span></td>
+        <td><b>Largely defused.</b> Three non-binary write surfaces exist, so v1 ships zero binary writes. When a
+        writer eventually lands it goes behind a harness that re-serialises an untouched package and byte-diffs it;
+        any drift blocks release.</td></tr>
+      <tr><td><b><code>packages.md5</code> integrity manifest</b> tripping on modified packages.</td>
+        <td class="mono"><s>High</s> Low / High</td>
+        <td><b>Defused.</b> MP client-connect check over script packages only. Never rewrite a stock <code>.u</code>
+        and it never fires. <code>forge_verify</code> reports its state rather than editing it.</td></tr>
+      <tr><td><b>Steam, GOG, retail and Amazon builds diverge</b> in DRM, executable and layout. <code>CT.exe</code>
+        explicitly does not work on the Amazon Prime Gaming build.</td><td class="mono">High / Medium</td>
+        <td>Fingerprint on first contact &mdash; exe hash, launcher version, SWRC Fix presence &mdash; and record the
+        variant. No hardcoded Steam path. This box's baseline is already captured.</td></tr>
+      <tr><td><b>Saves corrupt on their own, unmodded.</b> Documented case: profile reported damaged after roughly
+        four hours of vanilla play, recovered only by hand-copying save files into a fresh profile.</td>
+        <td class="mono">Medium / <span style="color:var(--red)">High</span></td>
+        <td>Backup-first, atomic write, temp file plus rename, never in place. And ship <code>save_repair</code> as a
+        first-class feature &mdash; the base game needs it whether or not you ever modded.</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>Tier 2 &mdash; first month</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Risk</th><th>L / I</th><th>Design-around</th></tr>
+      <tr><td><b>GameSpy is gone.</b> Native multiplayer browsing points at dead infrastructure.</td>
+        <td class="mono">Certain / Medium</td>
+        <td>v1 is single-player scope. Any MP config points at the community OpenSpy master server, already
+        configured here &mdash; never a legacy address.</td></tr>
+      <tr><td><b>UnrealEd 2005 is a UX cliff.</b> Non-obvious steps and multi-second selection lag; historically
+        where would-be modders quit.</td><td class="mono">Medium / Medium</td>
+        <td>This is the product thesis, not just a risk. Day-one tools replicate the known manual chores &mdash;
+        weapon damage, squad health, AI values &mdash; as single calls.</td></tr>
+      <tr><td><b><code>.ctm</code> needs reverse engineering.</b></td><td class="mono"><s>Medium</s> Nil</td>
+        <td><b>Dead.</b> Measured as an ordinary Unreal package. Same story for the Karma files, which are XML.</td></tr>
+      <tr><td><b>Mod conflicts.</b> Flat package replacement has no merge layer; two mods touching one package
+        clobber each other silently.</td><td class="mono">Med-High / Medium</td>
+        <td>Manifest and provenance in <code>mod_install</code>: record who owns which file, refuse silent overwrite,
+        surface conflicts. PropertyOverrides gets this free &mdash; one file per class means a collision is
+        literally a filename collision.</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>Tier 3 &mdash; slow burn</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Risk</th><th>L / I</th><th>Design-around</th></tr>
+      <tr><td><b>Parser rot is what actually kills these projects</b> &mdash; not one catastrophic bug, but a format
+        reader going stale while the community moves on. The Unreal tool graveyard is mostly abandoned forks.</td>
+        <td class="mono">Medium / Medium</td>
+        <td><code>forge_selftest</code> as permanent CI, same as the other three forges. Don't skip it because this
+        game looks simpler.</td></tr>
+      <tr><td><b>Star Wars IP.</b> Lucasfilm and Disney own everything; modders hold no copyright claim over
+        derivative assets.</td><td class="mono">Low-Med / <span style="color:var(--red)">High if triggered</span></td>
+        <td>The tool is clean &mdash; it is code. Never bundle extracted assets in the repo, this page, or test
+        fixtures. Ship diffs, patches and generators that operate on the user's own install.</td></tr>
+      <tr><td><b>Nexus API terms</b> forbid mass scraping and rehosting, and require app registration.</td>
+        <td class="mono">Low now / Medium</td>
+        <td>If a Nexus install source is ever built: register first, real key and identifying user agent,
+        pull-through only, never cache or rehost.</td></tr>
+      <tr><td><b>32-bit address-space ceiling</b> under heavy texture mods. No game-specific report found.</td>
+        <td class="mono">Unverified / Medium</td>
+        <td>Do not design against an unconfirmed risk. Measure first. Worth noting the Fix already applies a 4 GB
+        patch to the editor, which suggests the ceiling is real there at least.</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>Scoreboard after day one</h2>
+    <div class="grid three">
+      <div class="tile"><div class="k">Killed outright</div><div class="v" style="color:var(--green)">1</div>
+        <div class="n"><code>.ctm</code> and Karma formats</div></div>
+      <div class="tile"><div class="k">Defused to low</div><div class="v" style="color:var(--visor)">2</div>
+        <div class="n">md5 manifest &middot; binary writes</div></div>
+      <div class="tile"><div class="k">Fully live</div><div class="v" style="color:var(--red)">3</div>
+        <div class="n">save corruption &middot; build divergence &middot; mod conflicts</div></div>
+    </div>
+  </div>
+</section>
+
+<section id="road">
+  <div class="card">
+    <h2>Sequence</h2>
+    <p class="muted">Safety floor first. Nothing gets a write path until backup, fingerprint and verify all work.</p>
+    <ul class="road">
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>Recon</b>
+        <span>Install fingerprinted, vanilla baseline and 802-file manifest captured, formats measured, toolchain
+        downloaded and installed, UCC verified.</span></div></li>
+      <li class="now"><span class="mark">NEXT</span><div class="body"><b>The round-trip experiment</b>
+        <span>Does <code>ucc pkg import texture</code> reproduce a stock <code>.utx</code> byte-for-byte? This single
+        answer decides whether a binary package writer is ever built.</span></div></li>
+      <li><span class="mark">1</span><div class="body"><b>Safety floor</b>
+        <span><code>forge_workspace</code>, <code>forge_backup</code>, <code>forge_verify</code>. No write path ships
+        before these are green.</span></div></li>
+      <li><span class="mark">2</span><div class="body"><b>Package reader</b>
+        <span>Header, name, import and export tables. Unlocks <code>res_find</code> and decodes
+        <code>packages.md5</code>. Graded against UELib.</span></div></li>
+      <li><span class="mark">3</span><div class="body"><b>PropertyOverrides tools</b>
+        <span><code>prop_query</code>, <code>prop_override</code>, <code>prop_diff</code>. The first real
+        user-facing win, and the one that replaces an afternoon in UnrealEd with a sentence.</span></div></li>
+      <li><span class="mark">4</span><div class="body"><b>Config and launch profiles</b>
+        <span><code>ini_*</code> writing to <code>Save\</code> only, plus renderer, FOV and FPS control.</span></div></li>
+      <li><span class="mark">5</span><div class="body"><b>Asset pipeline</b>
+        <span><code>res_export</code> and <code>res_import</code> wrapping UCC.</span></div></li>
+      <li><span class="mark">6</span><div class="body"><b>Saves</b>
+        <span><code>save_*</code> including <code>save_repair</code> for the vanilla corruption failure mode.</span></div></li>
+      <li><span class="mark">7</span><div class="body"><b>Script</b>
+        <span><code>script_compile</code> via <code>ucc make</code>, <code>script_decompile</code> via UELib.</span></div></li>
+      <li><span class="mark">8</span><div class="body"><b>Binary writer &mdash; only if needed</b>
+        <span>Gated behind a green round-trip harness. Possibly never built, which would be the best outcome.</span></div></li>
+    </ul>
+  </div>
+  <div class="card">
+    <h2>Open questions</h2>
+    <p class="muted">Each carries a date. A stale "we don't know yet" that nobody re-checks is how a project ends up
+    solving a problem that was answered weeks ago.</p>
+    <ul>
+      <li><span class="tag t-open">2026-09-14</span>Does <code>ucc pkg import texture</code> round-trip byte-identically?</li>
+      <li><span class="tag t-open">2026-09-14</span>Which seventeen packages does <code>packages.md5</code> cover?</li>
+      <li><span class="tag t-open">2026-09-14</span>Does umodel handle package versions 157&ndash;159 at licensee 1?</li>
+      <li><span class="tag t-open">2026-09-14</span>Does a <code>-mod=</code> command-line switch work for this game?</li>
+      <li><span class="tag t-open">2026-09-14</span>Is the 32-bit address-space ceiling real under heavy texture loads?</li>
+    </ul>
+  </div>
+</section>
+
+<section id="scene">
+  <div class="card">
+    <h2>Where the community actually is, 2026</h2>
+    <p class="lede">Small, quiet, and more alive than it looks. The centre of gravity is one GitHub organisation and
+    one Discord, with ModDB carrying the content.</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Hub</th><th>Role</th><th>State</th></tr>
+      <tr><td><a href="https://swrc-modding.net/">swrc-modding.net</a></td>
+        <td>Wiki, file repo, Discord. The de facto home.</td>
+        <td>Active &mdash; and a single point of failure worth mirroring</td></tr>
+      <tr><td><a href="https://github.com/SWRC-Modding/CT">github.com/SWRC-Modding/CT</a></td>
+        <td>Reverse-engineered engine headers, UCC, the Fix, ModEd, OpenGL renderer.</td>
+        <td>Actively maintained</td></tr>
+      <tr><td><a href="https://www.moddb.com/games/star-wars-republic-commando/mods">ModDB</a></td>
+        <td>The content hub. Thirty-odd mods, several updated this month.</td><td>Active, open downloads</td></tr>
+      <tr><td><a href="https://www.nexusmods.com/games/starwarsrepubliccommando">Nexus Mods</a></td>
+        <td>Smaller mirror &mdash; gameplay tweaks, reskins, a LAN co-op mod.</td><td>Active, account-gated</td></tr>
+      <tr><td><a href="https://www.pcgamingwiki.com/wiki/Star_Wars:_Republic_Commando">PCGamingWiki</a></td>
+        <td>The canonical fix and troubleshooting index.</td><td>Maintained</td></tr>
+      <tr><td>Steam Workshop</td><td>&mdash;</td>
+        <td><span class="tag t-dead">None</span>Results under this name are Garry's Mod addons, not mods for this game</td></tr>
+      <tr><td>GameFront &middot; RepublicCommandoFiles &middot; LucasForums</td><td>The old archives.</td>
+        <td><span class="tag t-dead">Dead</span>archive.org only</td></tr>
+    </table></div>
+  </div>
+  <div class="card">
+    <h2>Notable work by others</h2>
+    <ul>
+      <li><b>Republic Commando Fix</b> &mdash; the community patch, and the reason any of this is tractable. Crash
+      fixes, modern resolutions, FOV, an OpenGL 4.5 renderer, editor repairs, a restored server browser, and
+      PropertyOverrides. Actively developed.</li>
+      <li><b>SWRC: Remaster</b> &mdash; large reskin and visual overhaul, still in beta.</li>
+      <li><b>Slightly Remastered</b> &mdash; gameplay-property remaster, updated this month.</li>
+      <li><b>RTX Remix projects</b> &mdash; two separate path-traced lighting efforts.</li>
+      <li><b>CoopMOD</b> &mdash; the only LAN co-op implementation found.</li>
+      <li><b>FirstPersonPlayer</b> &mdash; small, clean UnrealScript reference for this specific game.</li>
+      <li><b>Widescreen HUD Fix</b> &mdash; legacy, largely superseded, still the standalone HUD reference.</li>
+    </ul>
+    <p class="faint" style="margin-bottom:0">Multiplayer runs on a community OpenSpy master server since GameSpy
+    shut down. That is already configured on this install.</p>
+  </div>
+</section>
+
+<footer>
+  <span>RC Forge &middot; a C. Kuro project &middot; fourth in the forge family</span>
+  <span class="mono">Recon 2026-09-14 &middot; measured, not assumed</span>
+</footer>
+</div>
+<script>
+(function(){
+  var nav=document.getElementById('nav');
+  nav.addEventListener('click',function(e){
+    var b=e.target.closest('.tab'); if(!b) return;
+    [].forEach.call(nav.querySelectorAll('.tab'),function(t){t.classList.toggle('on',t===b);});
+    [].forEach.call(document.querySelectorAll('section'),function(s){s.classList.toggle('on',s.id===b.dataset.s);});
+    window.scrollTo({top:0,behavior:'smooth'});
+  });
+})();
+</script>
+</body>
+</html>
