@@ -137,7 +137,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
   <div class="brand">
     <h1>RC Forge</h1>
     <span class="sub">Star Wars: Republic Commando &mdash; modding toolchain</span>
-    <span class="live"><span class="dot"></span>RECON COMPLETE &middot; 2026-09-14</span>
+    <span class="live"><span class="dot"></span>EXPERIMENT 1 CLOSED &middot; 2026-09-14</span>
   </div>
   <nav id="nav">
     <button class="tab on" data-s="status">Status</button>
@@ -158,16 +158,17 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     <a href="https://kotor-forge.vercel.app">KOTOR Forge</a> and <a href="https://ac6-forge.vercel.app">AC6 Forge</a>:
     an MCP server that reads and writes game state directly, so changes happen in a sentence instead of an afternoon
     in a 2005 editor.</p>
-    <p class="muted">Day one was deliberately spent measuring rather than building. Three assumptions that would
-    have shaped the whole architecture turned out to be wrong &mdash; two of them in our favour.</p>
+    <p class="muted">Day one was deliberately spent measuring rather than building. Four assumptions that would
+    have shaped the whole architecture turned out to be wrong &mdash; two in our favour, one against us, and one
+    of them our own.</p>
   </div>
 
   <div class="tiles">
     <div class="tile"><div class="k">Game files indexed</div><div class="v">802</div><div class="n">MD5 manifest, full vanilla baseline</div></div>
-    <div class="tile"><div class="k">Package versions</div><div class="v">134&ndash;159</div><div class="n">licensee mode 1, measured</div></div>
+    <div class="tile"><div class="k">Package versions</div><div class="v">130&ndash;159</div><div class="n">licensee mode 1, measured</div></div>
     <div class="tile"><div class="k">UCC commandlets</div><div class="v">18</div><div class="n">verified running locally</div></div>
-    <div class="tile"><div class="k">Binary writers needed</div><div class="v">0</div><div class="n">for v1 &mdash; three text/tool paths exist</div></div>
-    <div class="tile"><div class="k">Risks retired day one</div><div class="v">3</div><div class="n">of 13 on the register</div></div>
+    <div class="tile"><div class="k">Verified write paths</div><div class="v">2</div><div class="n">both plain text &mdash; assets still open</div></div>
+    <div class="tile"><div class="k">Claims tested, then killed</div><div class="v">4</div><div class="n">including one of our own</div></div>
   </div>
 
   <div class="grid two">
@@ -181,6 +182,10 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
         <li>SWRC Fix 2.15 installed; original <code>System.ini</code> preserved; language untouched.</li>
         <li><code>UCC.exe</code> smoke-tested; full commandlet surface captured.</li>
         <li>Every asset container's header dumped and versioned by hand.</li>
+        <li><b>Asset export proven end to end</b> &mdash; a real texture pulled out of a stock package to BMP,
+        game files verified byte-identical afterwards.</li>
+        <li><b>The <code>ucc pkg</code> write path tested and disproven</b>, then corrected everywhere it had
+        been written down. See Architecture.</li>
       </ul>
     </div>
     <div class="card">
@@ -189,7 +194,8 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
         <li><b>No <code>rc-forge</code> code exists.</b> The design is written; not a line of Python is shipped.</li>
         <li>umodel / UE Viewer &mdash; the direct download 404s and the page is JS-gated. Needs a browser pass.</li>
         <li><code>packages.md5</code> export table not yet decoded &mdash; we know its shape, not its contents.</li>
-        <li>The round-trip experiment that decides the whole write strategy is still unrun. See Architecture.</li>
+        <li><b>Asset writing has no verified path.</b> The commandlet everyone assumes exists doesn't. The
+        replacement hypothesis is written up but untested.</li>
       </ul>
       <p class="faint" style="margin-bottom:0">Nothing on this page is a plan dressed up as progress. If it says
       done, it ran on the machine.</p>
@@ -197,7 +203,12 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
   </div>
 
   <div class="card">
-    <h2>Three corrections to the received wisdom</h2>
+    <h2>Four corrections to the received wisdom</h2>
+    <div class="note bad"><span class="tag t-meas">Measured</span><strong>The fourth correction is to us.</strong>
+      This page originally claimed <code>ucc pkg import texture</code> gave us a safe asset write path. It was
+      read off UCC's own printed usage text, and that text is a stub describing a command the binary does not
+      implement. Testing it killed it the same day it was written. It is corrected in place rather than quietly
+      deleted, because a project that only publishes its wins is not documentation, it is marketing.</div>
     <div class="note good"><span class="tag t-meas">Measured</span><strong><code>.ctm</code> is not proprietary.</strong>
       File-type reference sites call Republic Commando's map format a closed binary requiring special software.
       It carries the plain Unreal package magic <code>0x9E2A83C1</code>, version 159, licensee 1 &mdash; an ordinary
@@ -304,9 +315,10 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     <h3>The three that matter</h3>
     <div class="grid three">
       <div class="card" style="margin:0"><h3 style="color:var(--amber-2)"><code>pkg</code></h3>
-        <p class="mono faint" style="font-size:12px">ucc pkg import|export texture|sound &lt;package&gt; &lt;dir&gt;</p>
-        <p class="muted" style="margin:0">Round-trips an entire texture or sound package to and from a directory of
-        loose files. Texture and audio mods with no binary writing whatsoever.</p></div>
+        <p class="mono faint" style="font-size:12px">ucc pkg list|expand &lt;package&gt;</p>
+        <p class="muted" style="margin:0"><code>list</code> dumps a package's full summary, export and import
+        tables &mdash; a free known-good reference to grade our own parser against. <code>expand</code> splits
+        one into sub-packages, and writes into the game directory uninvited.</p></div>
       <div class="card" style="margin:0"><h3 style="color:var(--amber-2)"><code>make</code></h3>
         <p class="mono faint" style="font-size:12px">ucc make [-All] [-Silent]</p>
         <p class="muted" style="margin:0">Compiles UnrealScript from <code>Code\&lt;Package&gt;\Classes\*.uc</code>.
@@ -360,16 +372,32 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
         deleting a line.</div></div>
       <div class="step s2"><div class="n">SAFE</div><div class="t">PropertyOverrides</div>
         <div class="d">Text. One file per class. Full gameplay-tuning surface with no package touched.</div></div>
-      <div class="step s3"><div class="n">MEDIATED</div><div class="t">UCC</div>
-        <div class="d"><code>pkg import</code> for assets, <code>make</code> for script. The game's own tools do the
-        serialising.</div></div>
+      <div class="step s3"><div class="n">MEDIATED &middot; HALF GONE</div><div class="t">UCC</div>
+        <div class="d">Reading out works (<code>batchexport</code>, <code>pkg list</code>). Writing assets back
+        has no verified path &mdash; <code>ucc pkg import</code> turned out not to exist. <code>ucc make</code>
+        for script is untested.</div></div>
       <div class="step s4"><div class="n">LAST RESORT &middot; v2+</div><div class="t">Binary writer</div>
         <div class="d">Raw UE2 read-modify-write. Gated behind a byte-exact round-trip harness. Only if the tier
         above proves insufficient.</div></div>
     </div>
-    <div class="note"><strong>The one experiment that settles it.</strong> Does <code>ucc pkg import texture</code>
-    round-trip a stock <code>.utx</code> byte-identically? If yes, tier four may never need to be built at all.
-    Unrun as of today, and it is the highest-value thing left on the board.</div>
+    <div class="note bad"><span class="tag t-meas">Measured</span><strong>Rung three is smaller than advertised.</strong>
+    The experiment that was going to settle this asked whether <code>ucc pkg import texture</code> round-trips a
+    stock package. It doesn't, because <strong>the command does not exist.</strong> Brute-forcing 36 verbs left
+    exactly two standing, and the decompiled <code>UPkgCommandlet::Main</code> confirms it compares against
+    precisely two string literals: <code>list</code> and <code>expand</code>. UCC's own printed usage text
+    advertising import/export is a stale stub that does not describe the binary. <b>Lesson recorded:</b> never
+    trust <code>ucc help</code> without running the command.</div>
+    <p><strong>What that costs us.</strong> Reading assets out is solved &mdash; <code>batchexport</code> works,
+    verified on a real texture. Writing them back has <em>no verified path</em>. Gameplay modding through
+    PropertyOverrides is untouched and still needs zero binary writes; asset modding is now an open question
+    rather than a solved one.</p>
+    <div class="note"><span class="tag t-inf">Next hypothesis &mdash; untested</span>The UT-era way to build a
+    texture package was never a commandlet. It is a <code>.uc</code> class carrying
+    <code>#exec TEXTURE IMPORT</code> directives, compiled by <code>ucc make</code>, which emits the package.
+    This game ships the <code>EditPackages</code> machinery that needs, and SWRC Fix 2.9 added a
+    <code>[UCC.Make] AutoLoad</code> option specifically to smooth <code>ucc make</code> failures &mdash; all
+    consistent with this being the live path. If it holds, asset import is solved without a binary writer.
+    Stated as a hypothesis, not a finding.</div>
   </div>
 
   <div class="card">
@@ -439,8 +467,11 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     <p class="lede">Projects like this rarely die of a dramatic bug. They die of a parser that silently corrupted
     something in week three, or a maintainer who lost a weekend to a checksum that turned out not to matter.
     So the failure modes got researched before the code got written.</p>
-    <p class="muted" style="margin-bottom:0">Thirteen risks went on the board. One day of measurement killed one
-    outright and defused two more. The scoreboard is honest about which ones are still fully live.</p>
+    <p class="muted">Thirteen risks went on the board. One day of measurement killed one outright, defused one,
+    and <em>partly walked one back</em> after the mitigation we were relying on failed its first test. The
+    scoreboard below is the honest version, not the optimistic one.</p>
+    <p class="faint" style="margin-bottom:0">A register that only ever moves in the reassuring direction is a
+    register nobody is testing.</p>
   </div>
 
   <div class="card">
@@ -456,9 +487,10 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
         fields to recompute, and script bytecode with absolute jumps that break silently when a body changes length.
         The classic "worked once, corrupted it forever."</td>
         <td class="mono">High / <span style="color:var(--red)">Silent corruption</span></td>
-        <td><b>Largely defused.</b> Three non-binary write surfaces exist, so v1 ships zero binary writes. When a
-        writer eventually lands it goes behind a harness that re-serialises an untouched package and byte-diffs it;
-        any drift blocks release.</td></tr>
+        <td><b>Partly defused, and less than we thought.</b> Two text write surfaces are confirmed, so gameplay
+        modding ships with zero binary writes. The third surface was tested and did not survive &mdash; asset
+        writing is unsolved. When a writer eventually lands it goes behind a harness that re-serialises an
+        untouched package and byte-diffs it; any drift blocks release.</td></tr>
       <tr><td><b><code>packages.md5</code> integrity manifest</b> tripping on modified packages.</td>
         <td class="mono"><s>High</s> Low / High</td>
         <td><b>Defused.</b> MP client-connect check over script packages only. Never rewrite a stock <code>.u</code>
@@ -523,11 +555,13 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
 
   <div class="card">
     <h2>Scoreboard after day one</h2>
-    <div class="grid three">
+    <div class="tiles">
       <div class="tile"><div class="k">Killed outright</div><div class="v" style="color:var(--green)">1</div>
         <div class="n"><code>.ctm</code> and Karma formats</div></div>
-      <div class="tile"><div class="k">Defused to low</div><div class="v" style="color:var(--visor)">2</div>
-        <div class="n">md5 manifest &middot; binary writes</div></div>
+      <div class="tile"><div class="k">Defused to low</div><div class="v" style="color:var(--visor)">1</div>
+        <div class="n">md5 manifest</div></div>
+      <div class="tile"><div class="k">Walked back</div><div class="v" style="color:var(--amber-2)">1</div>
+        <div class="n">binary writes &mdash; assets unsolved again</div></div>
       <div class="tile"><div class="k">Fully live</div><div class="v" style="color:var(--red)">3</div>
         <div class="n">save corruption &middot; build divergence &middot; mod conflicts</div></div>
     </div>
@@ -542,9 +576,14 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
       <li class="done"><span class="mark">DONE</span><div class="body"><b>Recon</b>
         <span>Install fingerprinted, vanilla baseline and 802-file manifest captured, formats measured, toolchain
         downloaded and installed, UCC verified.</span></div></li>
-      <li class="now"><span class="mark">NEXT</span><div class="body"><b>The round-trip experiment</b>
-        <span>Does <code>ucc pkg import texture</code> reproduce a stock <code>.utx</code> byte-for-byte? This single
-        answer decides whether a binary package writer is ever built.</span></div></li>
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>The round-trip experiment &mdash; negative result</b>
+        <span><code>ucc pkg import</code> does not exist. Disproven by brute force and confirmed in the decompiled
+        binary. Asset export works; asset import is back to being an open problem.</span></div></li>
+      <li class="now"><span class="mark">NEXT</span><div class="body"><b>The <code>#exec TEXTURE IMPORT</code> test</b>
+        <span>Build a throwaway <code>.uc</code> class with a single import directive, compile it with
+        <code>ucc make</code>, and inspect the result with <code>ucc pkg list</code>. If a loadable package comes
+        out, asset modding is solved without a binary writer. Byte-identity is not the bar &mdash; loadable and
+        correct is.</span></div></li>
       <li><span class="mark">1</span><div class="body"><b>Safety floor</b>
         <span><code>forge_workspace</code>, <code>forge_backup</code>, <code>forge_verify</code>. No write path ships
         before these are green.</span></div></li>
@@ -571,7 +610,12 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     <p class="muted">Each carries a date. A stale "we don't know yet" that nobody re-checks is how a project ends up
     solving a problem that was answered weeks ago.</p>
     <ul>
-      <li><span class="tag t-open">2026-09-14</span>Does <code>ucc pkg import texture</code> round-trip byte-identically?</li>
+      <li><span class="tag t-meas">Answered</span><s>Does <code>ucc pkg import texture</code> round-trip
+      byte-identically?</s> No &mdash; the command does not exist. Closed 2026-09-14.</li>
+      <li><span class="tag t-open">2026-09-14</span>Does <code>#exec TEXTURE IMPORT</code> plus <code>ucc make</code>
+      emit a loadable package? <b>Now the highest-value test.</b></li>
+      <li><span class="tag t-open">2026-09-14</span>Does <code>ucc make</code> work here at all, given the game
+      shipped no <code>Code\</code> tree?</li>
       <li><span class="tag t-open">2026-09-14</span>Which seventeen packages does <code>packages.md5</code> cover?</li>
       <li><span class="tag t-open">2026-09-14</span>Does umodel handle package versions 157&ndash;159 at licensee 1?</li>
       <li><span class="tag t-open">2026-09-14</span>Does a <code>-mod=</code> command-line switch work for this game?</li>
