@@ -159,9 +159,9 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     machine and was verified; nothing here is a plan wearing a green badge.</p>
     <div class="tiles">
       <div class="tile"><div class="k">Sprints closed</div><div class="v" style="color:var(--green)">4</div><div class="n">recon → toolchain → v0.1 → format</div></div>
-      <div class="tile"><div class="k">Parser fidelity</div><div class="v" style="color:var(--green)">100%</div><div class="n">37,471 / 37,471 export rows</div></div>
+      <div class="tile"><div class="k">Parser fidelity</div><div class="v" style="color:var(--green)">100%</div><div class="n">37,698 rows · 37 of 37 packages · 0 skips</div></div>
       <div class="tile"><div class="k">rc-forge tools</div><div class="v">18</div><div class="n">all smoke-tested green</div></div>
-      <div class="tile"><div class="k">Blockers left</div><div class="v" style="color:var(--amber-2)">4</div><div class="n">of the original 9</div></div>
+      <div class="tile"><div class="k">Blockers left</div><div class="v" style="color:var(--amber-2)">3</div><div class="n">of the original 9</div></div>
       <div class="tile"><div class="k">Stock files touched</div><div class="v" style="color:var(--green)">0</div><div class="n">of 21, MD5-verified</div></div>
     </div>
   </div>
@@ -192,24 +192,33 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
   </div>
 
   <div class="card">
-    <h2 style="color:var(--amber-2)">Sprint 5 &mdash; next up</h2>
+    <h2 style="color:var(--green)">Sprint 5 &mdash; three of five closed, same day</h2>
+    <ul class="road">
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>Every package version solved</b>
+        <span>The solver was pointed at the four stragglers. A third band appeared: below v146,
+        <code>serialSize</code> and <code>serialOffset</code> revert to <b>compact indices</b>. Three bands
+        total, and the self-test now reports <b>37,698 / 37,698 rows across 37 of 37 packages &mdash; zero
+        skips, zero fallbacks.</b></span></div></li>
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>Bool editing in saves</b>
+        <span><code>bCannotDie</code> true → false. Info byte <code>0xD3 → 0x53</code>:
+        <b>exactly one byte changed in a 232 KB file</b>, size unchanged, package still parses, read-back
+        verified. A bool has no payload &mdash; the value is bit 7 of its own tag.</span></div></li>
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>The three stubborn save objects</b>
+        <span>All parse. The state-frame formula overshot by five bytes on exactly these, so the stream start
+        is now <b>scored rather than computed</b> &mdash; candidates are ranked by how many well-formed tags
+        they yield. <code>LevelInfo</code> gives up <code>TimeSeconds</code>, <code>Campaign</code> and the
+        whole visible-group list; the controller and GameInfo open up too.</span></div></li>
+    </ul>
+    <div class="note good"><strong>Save coverage, measured across all five of your saves:</strong>
+    <b>85&ndash;91% of objects parsed, 13,000&ndash;32,000 properties each, and essentially zero
+    truncations.</b> The remainder are objects that genuinely carry no tagged properties.</div>
+    <h3>Still open in Sprint 5</h3>
     <div class="tbl-wrap"><table>
-      <tr><th>Target</th><th>Why it's next</th><th>Definition of done</th></tr>
+      <tr><th>Target</th><th>Why</th><th>Definition of done</th></tr>
       <tr><td><b>Prove a PropertyOverride in-game</b></td>
-        <td>The whole gameplay-modding thesis rests on it and it has never been round-tripped through
-        an actual game launch.</td>
-        <td>Write one, launch, see the value change, revert by deleting the file.</td></tr>
-      <tr><td><b>Bool editing in saves</b></td>
-        <td>A bool lives in the tag's info byte, not a payload &mdash; a one-bit flip, but it needs the tag
-        offset rather than the value offset. Currently refused by design.</td>
-        <td><code>bCannotDie</code> flips and reads back.</td></tr>
-      <tr><td><b>The 3 stubborn save objects</b></td>
-        <td><code>LevelInfo</code>, <code>ModCTPlayer</code> and <code>CTGameInfoSP</code> return zero
-        properties &mdash; extra native data before the stream.</td>
-        <td>All three parse, or the reason is documented.</td></tr>
-      <tr><td><b>v134 / v138 / v145 / v154 layouts</b></td>
-        <td>Four old packages still fall back to UCC. Low value, high tidiness.</td>
-        <td>Self-test reports zero skips.</td></tr>
+        <td>The whole gameplay-modding thesis rests on it and it has still never been round-tripped through
+        an actual game launch. <b>Now the single most important open item on the board.</b></td>
+        <td>Write one, launch, see it take, revert by deleting the file.</td></tr>
       <tr><td><b>umodel</b></td>
         <td>Only route to extracting existing skeletal meshes; UCC has no PSK exporter.</td>
         <td>A <code>.psk</code> on disk.</td></tr>
