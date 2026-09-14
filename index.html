@@ -137,7 +137,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
   <div class="brand">
     <h1>RC Forge</h1>
     <span class="sub">Star Wars: Republic Commando &mdash; modding toolchain</span>
-    <span class="live"><span class="dot"></span>EXPERIMENT 1 CLOSED &middot; 2026-09-14</span>
+    <span class="live"><span class="dot"></span>5 OF 9 BLOCKERS CLEARED &middot; 2026-09-14</span>
   </div>
   <nav id="nav">
     <button class="tab on" data-s="status">Status</button>
@@ -488,19 +488,95 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
     <h2 style="color:var(--amber-2)">Can't do yet</h2>
     <div class="tbl-wrap"><table>
       <tr><th>Blocked</th><th>Why</th><th>Route out</th></tr>
-      <tr><td><b>Write binary packages</b></td><td>No writer exists in any language for UE2; UCC has no import.</td><td>Build one behind a byte-exact harness &mdash; or avoid it entirely.</td></tr>
-      <tr><td><b><code>#exec</code> + <code>ucc make</code> on this game</b></td><td>Proven for UE2 generally, <em>never tested on Republic Commando</em>. The game shipped no <code>Code\</code> tree.</td><td>Test it. Highest-value experiment remaining.</td></tr>
-      <tr><td><b>New skeletal meshes and animations</b></td><td>Pipeline is documented generically (Blender PSK/PSA → <code>#exec MESH MODELIMPORT</code> → <code>ucc make</code>). Nobody has shown it working here. The RTX mod claims it; unverified.</td><td>Depends on the row above.</td></tr>
+      <tr><td><s>Write binary packages</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td><b><code>ucc make</code> is the package writer.</b> A binary writer is only needed to edit stock packages in place, which nothing requires.</td></tr>
+      <tr><td><s><code>#exec</code> + <code>ucc make</code> on this game</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td>Compiles. Texture and audio import both land. See below.</td></tr>
+      <tr><td><b>New skeletal meshes and animations</b></td><td><b>Half solved.</b> The <code>#exec</code> mechanism is proven; the import direction is untested only because <b>UCC has no PSK/PSA exporter</b>, so there was no rig to feed it.</td><td>A tooling problem now, not an unknown. Author a PSK in Blender, or get umodel.</td></tr>
       <tr><td><b>New squad order types</b></td><td>The marker state machines are compiled C++.</td><td><code>FunctionOverride</code>, or a native mod.</td></tr>
       <tr><td><b>Savegame writing</b></td><td>Format now known; no writer, and serialisation is native.</td><td>Depends on the package writer. Reading works today.</td></tr>
       <tr><td><b>Stable co-op</b></td><td>The existing mod breaks if the second player joins before certain scripted sequences &mdash; squad commands die and the campaign can't progress. Unmaintained for years.</td><td>Real work on scripted-sequence replication.</td></tr>
-      <tr><td><b>Karma physics authoring</b></td><td>The authoring tool was a 2002-era 3DS Max plugin. No published schema.</td><td>The files are XML. Reverse it by example &mdash; tractable.</td></tr>
-      <tr><td><b>Restoring the other cut maps</b></td><td><code>1138</code> is present; geo_02, geo_03b and the missing Kashyyyk maps are not in the data.</td><td>Load <code>1138</code>. Rebuild the rest from scratch, or don't.</td></tr>
+      <tr><td><s>Karma physics authoring</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td>Schema documented from the files. <code>ASSET</code> → <code>GEOMETRY</code> per bone → <code>PRIMITIVE</code> (sphyl or sphere) with radius, height and a 4&times;4 matrix. Hand-authorable.</td></tr>
+      <tr><td><s>Restoring the cut <code>1138</code> map</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td>Intact and playable. See below. The other cut maps are absent from the data and would need rebuilding.</td></tr>
       <tr><td><b>Netcode beyond the engine's rules</b></td><td>Can't override parent replication statements; client-to-server variable replication only works for your own pawn; replication isn't recursive.</td><td>Native mod, or accept it.</td></tr>
     </table></div>
-    <p class="faint" style="margin-bottom:0">Smaller open items: the contents of <code>packages.md5</code>,
-    umodel support, whether the music suffixes mean what I think, whether a stock map survives a resave, and
-    whether this game does lip sync at all.</p>
+    <p class="faint" style="margin-bottom:0">Still genuinely open: umodel, whether the music suffixes mean what
+    I think, and whether a stock map survives a resave in UnrealEd.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--green)">Experiment 2 &mdash; the wall came down</h2>
+    <p class="lede">Seven of the nine blockers were attacked directly. Five are closed. Stock game files after
+    every test: <strong>0 of 21 packages modified</strong>, MD5-verified against the vanilla backup.</p>
+    <h3>The package writer already existed</h3>
+    <p>The game shipped no <code>Code\</code> tree, so nobody had ever confirmed <code>ucc make</code> worked
+    here. It does. A test class plus one <code>EditPackages</code> line produced a valid
+    <strong>version-159 package, identical in format to stock</strong>. And both asset-import directives landed:</p>
+    <p class="mono" style="background:var(--raise);border:1px solid var(--line);padding:10px 12px;border-radius:2px;color:var(--amber-2)">
+    #exec TEXTURE IMPORT NAME=RCForgeProbeTex FILE=Textures\RCForgeProbe.bmp GROUP=RCForge MIPS=1<br>
+    #exec AUDIO IMPORT NAME=RCForgeProbeSnd FILE=Sounds\RCForgeProbeSnd.wav GROUP=RCForge</p>
+    <p class="mono faint" style="font-size:12.3px">-- Objects: 8, 30579 bytes<br>&nbsp;Class RCForgeProbe, size 123<br>&nbsp;<b style="color:var(--green)">Sound RCForge.RCForgeProbeSnd, size 13103</b><br>&nbsp;<b style="color:var(--green)">Texture RCForge.RCForgeProbeTex, size 16446</b></p>
+    <div class="note good"><strong><code>ucc make</code> is the package writer.</strong> The binary-writing
+    problem was never a blocker for <em>creating</em> content &mdash; only for editing stock packages in place,
+    and PropertyOverrides and <code>FunctionOverride</code> already make that unnecessary. Rung three of the
+    write ladder went from "half gone" to the strongest rung on it.</div>
+
+    <h3>The integrity manifest is inert</h3>
+    <p><code>packages.md5</code> holds 17 entries, each an uppercase and a lowercase MD5, and
+    <b>no package names at all</b>. Hashing all 21 stock script packages against all 34 hashes gives
+    <strong>zero matches</strong>. It is either stale from another build or hashes something other than whole
+    files &mdash; either way it cannot be a whole-file check against these files, so it will not fire.
+    Closed, not merely defused.</p>
+
+    <h3>The cut <code>1138</code> map is the developers' level-warp room</h3>
+    <p>325 objects, 536 KB, fully lit and playable: a PlayerStart, 48 lights, 37 triggers, 19 scripted
+    triggers, 14 cameras, two Clone Commandos &mdash; and <strong>17 <code>ACTION_ChangeLevel</code>
+    nodes</strong>, each behind a label and a timer. Walk onto a pad, get sent to that mission. It imports the
+    loading screen for every level in the game, <em>including one of the cut ones</em>. It ships in every copy.
+    Reachable with <code>open 1138</code>.</p>
+
+    <h3>Two things that turned out not to exist</h3>
+    <p><b>Lip sync.</b> Zero matches for <code>lipsync</code>, <code>viseme</code> or <code>phoneme</code>
+    across all 3,341 classes, and the <code>lips/</code> folder I previously listed isn't in this game at all
+    &mdash; that was my error, carried over from a different game's directory listing. Nothing to build.</p>
+    <p style="margin-bottom:0"><b>A PSK exporter.</b> UCC has none &mdash;
+    <code>batchexport clone.ukx SkeletalMesh psk</code> returns "No psk exporter found". Getting existing rigs
+    <em>out</em> needs umodel. Getting new ones <em>in</em> is untested only for lack of a rig to feed it.</p>
+  </div>
+
+  <div class="card">
+    <h2>Gotchas found the hard way</h2>
+    <ul>
+      <li><b>UCC's argument parser breaks on spaces in paths &mdash; even quoted.</b> An export to a path under
+      <code>…\Star Wars Republic Commando\…</code> silently wrote to
+      <code>D:\SteamLibrary\steamapps\common\Star\</code>, truncating at the first space and creating a stray
+      directory 24 files deep. Every automated UCC call needs space-free paths and a check on where output
+      actually landed.</li>
+      <li><b>Unrecognised <code>#exec</code> directives fail silently.</b> No error, no output, no object.
+      Always verify with <code>ucc pkg list</code>.</li>
+      <li><code>ucc pkg expand</code> writes into the game directory with no way to redirect it.</li>
+      <li><code>ucc make</code> is incremental &mdash; delete the target package to force a rebuild.</li>
+      <li><code>#exec FILE=</code> paths are relative to <code>Code\&lt;Package&gt;\</code>, which conveniently
+      dodges the space bug.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>Karma physics, documented</h2>
+    <p>No reverse engineering needed &mdash; the format describes itself:</p>
+    <p class="mono faint" style="font-size:12.2px;background:var(--raise);border:1px solid var(--line);padding:10px 12px;border-radius:2px">&lt;KARMA ka_file_version="1.0"&gt;<br>&nbsp;&nbsp;&lt;ASSET id="CloneCommando" graphic="CloneCommando.psk" scale="0.02" mass_scale="1"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&lt;GEOMETRY id="clavicle_l"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;PRIMITIVE id="clavicle_l_1" type="sphyl"&gt;<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;RADIUS&gt;0.0614&lt;/RADIUS&gt; &lt;HEIGHT&gt;0.405&lt;/HEIGHT&gt; &lt;TM&gt;16 floats&lt;/TM&gt;</p>
+    <p style="margin-bottom:0">One <code>ASSET</code> per character naming its <code>.psk</code>, one
+    <code>GEOMETRY</code> per bone, and capsule or sphere primitives with a 4&times;4 transform. Generating
+    these programmatically is straightforward. Note that the physics data <em>names PSK files</em> &mdash; the
+    PSK pipeline is native to this game's own content.</p>
+  </div>
+
+  <div class="card">
+    <h2>The music thresholds, measured</h2>
+    <p>Shipped defaults from <code>LevelInfo</code>, and they are all per-level editable:</p>
+    <p class="mono" style="background:var(--raise);border:1px solid var(--line);padding:10px 12px;border-radius:2px;color:var(--amber-2)">
+    BattleBaddieThreshold=3<br>BattleRadiusInner=1250<br>BattleRadiusOuter=2500</p>
+    <p style="margin-bottom:0">Combat music escalates at <strong>three enemies inside 1250 units</strong>, with
+    an outer band at 2500. Fade types are <code>MFT_Linear</code> and <code>MFT_Sine</code>. The
+    <code>_ol</code>/<code>_ep</code>/<code>_lp</code> suffix meanings are still inference, not fact.</p>
   </div>
 
   <div class="card">
