@@ -137,10 +137,11 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
   <div class="brand">
     <h1>RC Forge</h1>
     <span class="sub">Star Wars: Republic Commando &mdash; modding toolchain</span>
-    <span class="live"><span class="dot"></span>5 OF 9 BLOCKERS CLEARED &middot; 2026-09-14</span>
+    <span class="live"><span class="dot"></span>SPRINT 4 CLOSED &middot; SAVES READ + WRITE &middot; 2026-09-14</span>
   </div>
   <nav id="nav">
-    <button class="tab on" data-s="status">Status</button>
+    <button class="tab on" data-s="sprint">Sprint board</button>
+    <button class="tab" data-s="status">Status</button>
     <button class="tab" data-s="formats">Formats</button>
     <button class="tab" data-s="tools">Toolchain</button>
     <button class="tab" data-s="caps">Capabilities</button>
@@ -151,7 +152,103 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
   </nav>
 </header>
 
-<section id="status" class="on">
+<section id="sprint" class="on">
+  <div class="card">
+    <h2>Sprint board</h2>
+    <p class="lede">One page, current as of <b>2026-09-14</b>. Everything marked done ran on the
+    machine and was verified; nothing here is a plan wearing a green badge.</p>
+    <div class="tiles">
+      <div class="tile"><div class="k">Sprints closed</div><div class="v" style="color:var(--green)">4</div><div class="n">recon → toolchain → v0.1 → format</div></div>
+      <div class="tile"><div class="k">Parser fidelity</div><div class="v" style="color:var(--green)">100%</div><div class="n">37,471 / 37,471 export rows</div></div>
+      <div class="tile"><div class="k">rc-forge tools</div><div class="v">18</div><div class="n">all smoke-tested green</div></div>
+      <div class="tile"><div class="k">Blockers left</div><div class="v" style="color:var(--amber-2)">4</div><div class="n">of the original 9</div></div>
+      <div class="tile"><div class="k">Stock files touched</div><div class="v" style="color:var(--green)">0</div><div class="n">of 21, MD5-verified</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--green)">Sprint 4 &mdash; closed today</h2>
+    <ul class="road">
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>Crack the v159 export layout</b>
+        <span>Four wrong attempts, then a per-row constraint solver against UCC's output. Two findings
+        contradict every public UE2 reference: <code>serialSize</code>/<code>serialOffset</code> are
+        <b>u32, not compact indices</b>, and the row layout is <b>version-dependent</b>.
+        Result: <b>37,471 of 37,471 rows, 100%</b>, 33 packages byte-perfect.</span></div></li>
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>Property stream reader</b>
+        <span>Tagged-property walker. The unlock was <code>RF_HasStack</code> = bit 25 &mdash; actors carry
+        an <code>FStateFrame</code> before their properties, and 633 of 1,707 objects in one save have one.
+        Miss it and a save reads as noise.</span></div></li>
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>Savegame reading</b>
+        <span>Live values out of a real save: player <code>Health=200</code>, <code>bCannotDie=True</code>,
+        squad at <code>400/50</code>, <code>ActionString="Search and Destroy"</code>,
+        <code>OwnerName="julian"</code>.</span></div></li>
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>Savegame writing</b>
+        <span>Scalar in-place edit, proven on a copy: Health 200 → 999, verified by read-back.
+        <b>File size unchanged, exactly 3 bytes differ, package still parses.</b> Backup-first, atomic,
+        auto-rollback if read-back fails, and variable-width edits refused rather than attempted.</span></div></li>
+      <li class="done"><span class="mark">DONE</span><div class="body"><b>rc-forge v0.1 → v0.2</b>
+        <span>18 tools live, registered with Claude Desktop, permanent self-test harness.</span></div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 style="color:var(--amber-2)">Sprint 5 &mdash; next up</h2>
+    <div class="tbl-wrap"><table>
+      <tr><th>Target</th><th>Why it's next</th><th>Definition of done</th></tr>
+      <tr><td><b>Prove a PropertyOverride in-game</b></td>
+        <td>The whole gameplay-modding thesis rests on it and it has never been round-tripped through
+        an actual game launch.</td>
+        <td>Write one, launch, see the value change, revert by deleting the file.</td></tr>
+      <tr><td><b>Bool editing in saves</b></td>
+        <td>A bool lives in the tag's info byte, not a payload &mdash; a one-bit flip, but it needs the tag
+        offset rather than the value offset. Currently refused by design.</td>
+        <td><code>bCannotDie</code> flips and reads back.</td></tr>
+      <tr><td><b>The 3 stubborn save objects</b></td>
+        <td><code>LevelInfo</code>, <code>ModCTPlayer</code> and <code>CTGameInfoSP</code> return zero
+        properties &mdash; extra native data before the stream.</td>
+        <td>All three parse, or the reason is documented.</td></tr>
+      <tr><td><b>v134 / v138 / v145 / v154 layouts</b></td>
+        <td>Four old packages still fall back to UCC. Low value, high tidiness.</td>
+        <td>Self-test reports zero skips.</td></tr>
+      <tr><td><b>umodel</b></td>
+        <td>Only route to extracting existing skeletal meshes; UCC has no PSK exporter.</td>
+        <td>A <code>.psk</code> on disk.</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>The three engineering projects</h2>
+    <p class="muted">Bigger than a sprint item each. Listed with an honest read on difficulty rather than
+    a date.</p>
+    <div class="tbl-wrap"><table>
+      <tr><th>Project</th><th>State</th><th>What it actually needs</th></tr>
+      <tr><td><b>Savegame writing</b></td><td class="mono" style="color:var(--green)">SHIPPED</td>
+        <td>Done this sprint. Scalars only, by deliberate choice &mdash; that constraint is what makes it safe.</td></tr>
+      <tr><td><b>New squad order types</b></td><td class="mono" style="color:var(--amber-2)">READY TO START</td>
+        <td>Marker state machines are compiled C++, but <code>Mod.FunctionOverride</code> hot-patches any
+        UnrealScript call. Path: subclass an existing marker, hook its script entry points, and see how far
+        that gets before native code is unavoidable.</td></tr>
+      <tr><td><b>Stable co-op</b></td><td class="mono" style="color:var(--red)">HARDEST</td>
+        <td>The existing mod dies when player two joins before a scripted sequence. Needs the
+        scripted-sequence and squad-command replication understood properly. The engine's replication rules
+        are a real ceiling here, not a bug to fix.</td></tr>
+    </table></div>
+  </div>
+
+  <div class="card">
+    <h2>Backlog</h2>
+    <ul>
+      <li>Music suffix semantics &mdash; swap one <code>_ol</code> file and listen. Cheapest open question.</li>
+      <li>UnrealEd map round-trip: resave a stock map, byte-diff, reload.</li>
+      <li>Restore the Grievous encounter &mdash; the pawn, AI, ship, guards and stat blocks all ship with the game.</li>
+      <li>Load the cut <code>1138</code> warp room and walk it.</li>
+      <li><code>mod_install</code> with provenance and conflict detection.</li>
+      <li>Publish rc-forge as a real release for the SWRC community.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="status">
   <div class="card">
     <h2>What this is</h2>
     <p class="lede">A programmatic modding layer for a twenty-one-year-old Unreal Engine 2 game. Fourth in
@@ -492,7 +589,7 @@ footer{margin-top:34px;padding-top:16px;border-top:1px solid var(--line);
       <tr><td><s><code>#exec</code> + <code>ucc make</code> on this game</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td>Compiles. Texture and audio import both land. See below.</td></tr>
       <tr><td><b>New skeletal meshes and animations</b></td><td><b>Half solved.</b> The <code>#exec</code> mechanism is proven; the import direction is untested only because <b>UCC has no PSK/PSA exporter</b>, so there was no rig to feed it.</td><td>A tooling problem now, not an unknown. Author a PSK in Blender, or get umodel.</td></tr>
       <tr><td><b>New squad order types</b></td><td>The marker state machines are compiled C++.</td><td><code>FunctionOverride</code>, or a native mod.</td></tr>
-      <tr><td><b>Savegame writing</b></td><td>Format now known; no writer, and serialisation is native.</td><td>Depends on the package writer. Reading works today.</td></tr>
+      <tr><td><s>Savegame reading and writing</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td>Both shipped. Scalars edit in place: file size unchanged, 3 bytes moved, read-back verified. See the sprint board.</td></tr>
       <tr><td><b>Stable co-op</b></td><td>The existing mod breaks if the second player joins before certain scripted sequences &mdash; squad commands die and the campaign can't progress. Unmaintained for years.</td><td>Real work on scripted-sequence replication.</td></tr>
       <tr><td><s>Karma physics authoring</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td>Schema documented from the files. <code>ASSET</code> → <code>GEOMETRY</code> per bone → <code>PRIMITIVE</code> (sphyl or sphere) with radius, height and a 4&times;4 matrix. Hand-authorable.</td></tr>
       <tr><td><s>Restoring the cut <code>1138</code> map</s></td><td class="mono" style="color:var(--green)">SOLVED</td><td>Intact and playable. See below. The other cut maps are absent from the data and would need rebuilding.</td></tr>
